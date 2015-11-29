@@ -1,0 +1,46 @@
+# 請將NewsContent.RData這個檔案放在桌面，這個檔案裡面是一個表格，有包含341篇財經新聞的文章
+# 有三個欄位，分別是新聞的時間，新聞標題，以及新聞的文章內容
+load("/Users/user/Desktop/NewsContent.RData")  # 載入檔案
+colnames(NewsContent)   # 觀看欄位名稱
+install.packages("jiebaR")   # 安裝“結巴”套件
+library(jiebaR)    # 使用結巴套件
+
+
+NewsContent[1,]   # 觀看表格中第一列的值
+
+
+# StockKeyWords <- read.table("StockKeyWords.txt")
+
+mixseg = worker()   # 呼叫斷詞的工作者函數
+
+# 定義一個名叫seg的函數，將文章做斷詞，並將數字與標點符號去除，最後留下大於兩個字的詞
+Seg <- function(NEWs){
+  tmp <- segment(NEWs, mixseg)
+  tmp <- gsub("[0-9]","",tmp)
+  tmp <- tmp[nchar(tmp)>1]
+  return(tmp)
+}
+
+# 處理表格中每一列的文章，將Seg這個函數作用在每個文章上，並將所有文章的詞放在一起統計
+result <- unlist(sapply(NewsContent$Content,Seg))
+
+# 統計每個詞出現的次數，並由小到大排序顯示出來    
+sort(table(result))   
+
+install.packages("wordcloud") # 安裝文字雲套件
+library(wordcloud)  # 載入文字雲套件
+
+#On mac OS, it's needed to run this code first to make sure encoding of Chinese words will be fine on wordcloud
+par(family=("Heiti TC Light"))  # 在mac系統上，要處理中文字的文字雲要使用這個方法，以確保中文字不會顯示亂碼
+
+# 顯示文字雲，最多顯示40個詞，次數越多的詞，字體會越大
+wordcloud(names(table(result)),table(result), max.words=40)
+
+
+#一樣顯示文字雲，但詞頻小於300的才顯示
+wordcloud(iconv(names(table(result)[table(result)<300]),"UTF-8","UTF-8"),table(result)[table(result)<300], 
+          max.words=40,scale=c(2,0.002))
+
+#補充
+#install.packages("chinese-support")
+#library(chinese-support)
